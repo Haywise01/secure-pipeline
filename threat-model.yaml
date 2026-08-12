@@ -1,0 +1,26 @@
+apiVersion: threagile.io/v1
+id: secure-pipeline-model
+title: "Secure CI/CD Pipeline Threat Model"
+description: "Model covering ASVS build integrity and cloud deployment components."
+authors:
+  - name: "Security Engineering Team"
+data-assets:
+  - id: source-code
+    title: "Application Source Code"
+    usage: business
+    classification: confidential
+  - id: cloud-secrets
+    title: "OIDC Cloud Tokens"
+    usage: system
+    classification: strictly-confidential
+technical-assets:
+  - id: github-actions
+    title: "GitHub Actions CI/CD Runner"
+    technology: CI-CD
+    usage: enterprise
+    communicates-with:
+      - aws-cloud
+  - id: aws-cloud
+    title: "AWS Target Environment"
+    technology: Cloud-Platform
+    usage: enterprise

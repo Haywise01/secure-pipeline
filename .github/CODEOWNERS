@@ -1,0 +1,9 @@
+# Global default owners for the entire repository
+*                           @org/platform-team
+
+# Security team must explicitly review authentication and cryptography
+/src/auth/                  @org/security-team
+/src/crypto/                @org/security-team
+
+# CI/CD Workflows are critical trust boundaries
+/.github/workflows/         @org/platform-team
