@@ -1,0 +1,15 @@
+title = "Secure Pipeline Custom Gitleaks Configuration"
+
+[allowlist]
+description = "Ignored test files and mock secrets"
+paths = [
+    '''tests/.*''',
+    '''docs/.*''',
+    '''\.github/workflows/.*'''
+]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key Detected"
+regex = '''(?i)(api[_-]?key|secret[_-]?token)['"]?\s*[:=]\s*['"][a-zA-Z0-9_\-]{16,64}['"]'''
+tags = ["key", "secret", "generic"]
