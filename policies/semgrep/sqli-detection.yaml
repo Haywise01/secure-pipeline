@@ -1,0 +1,20 @@
+rules:
+  - id: asvs-v5-1-sql-injection
+    message: |
+      ASVS 2026 V5.1.3: User input passed directly to SQL query.
+      Use parameterised queries or a safe ORM abstraction.
+    severity: ERROR
+    metadata:
+      asvs: V5.1.3
+      cwe: CWE-89
+      owasp: A03:2021
+    languages: [python, javascript, java, go]
+    patterns:
+      - pattern: |
+          $QUERY = "... " + $INPUT + " ..."
+          $DB.execute($QUERY)
+      - pattern: |
+          $DB.query(f"... {$INPUT} ...")
+    fix: |
+      Use parameterised queries:
+      cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
