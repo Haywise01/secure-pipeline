@@ -1,0 +1,17 @@
+iast:
+  enabled: true
+  mode: protect
+  sampling_rate: 1.0
+  vulnerabilities:
+    sql_injection:
+      enabled: true
+      action: block
+    path_traversal:
+      enabled: true
+      action: block
+    ssrf:
+      enabled: true
+      action: log
+  reporting:
+    endpoint: "https://iast.internal/api/v2/telemetry"
+    api_key: "${IAST_API_KEY}"
