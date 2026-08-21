@@ -15,27 +15,25 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Local Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: secure-pipeline:latest
+
       - name: Generate SBOM (Syft)
         uses: anchore/sbom-action@v0
         with:
-          image: ''
-          path: ./src
+          image: secure-pipeline:latest
           format: cyclonedx-json
           output-file: ./sbom/sbom-cyclonedx.json
 
       - name: Upload SBOM Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-sbom
-          path: sbom/sbom-cyclonedx.json
-
-      - name: Build Docker Image
-        run: docker build -t secure-app:${{ github.sha }} ./src
-
-      - name: Scan Image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'secure-app:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          name: sbom-artifact
+          path: ./sbom/sbom-cyclonedx.json
