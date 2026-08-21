@@ -15,20 +15,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Local Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          load: true
-          tags: secure-pipeline:latest
+      - name: Create SBOM Directory
+        run: mkdir -p ./sbom
 
       - name: Generate SBOM (Syft)
         uses: anchore/sbom-action@v0
         with:
-          image: secure-pipeline:latest
+          path: .
           format: cyclonedx-json
           output-file: ./sbom/sbom-cyclonedx.json
 
