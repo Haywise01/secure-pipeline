@@ -1,9 +1,7 @@
-name: DevSecOps secure Pipeline
+name: DevSecOps Secure Pipeline
 
 on:
   workflow_call:
-  push:
-    branches: [ main ]
 
 permissions:
   security-events: write
@@ -13,6 +11,7 @@ jobs:
   security-scan:
     name: Run Code and Secret Scans
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
