@@ -11,6 +11,7 @@ jobs:
   detect-runtime-policy:
     name: Detect OPA Runtime Policy
     runs-on: ubuntu-latest
+
     outputs:
       has_policy: ${{ steps.detect.outputs.has_policy }}
 
@@ -20,6 +21,7 @@ jobs:
 
       - name: Check for OPA Policy
         id: detect
+        shell: bash
         run: |
           if [ -f "policies/opa/deployment-policy.rego" ]; then
             echo "has_policy=true" >> "$GITHUB_OUTPUT"
@@ -44,10 +46,20 @@ jobs:
         with:
           version: latest
 
+      - name: Validate OPA Policy
+        run: |
+          echo "Validating Open Policy Agent policy..."
+          opa check policies/opa/deployment-policy.rego
+
       - name: Run OPA Policy Check
         run: |
           echo "Evaluating Open Policy Agent runtime compliance..."
 
-          opa eval \
+          RESULT=$(opa eval \
+            --format=json \
             -d policies/opa/deployment-policy.rego \
-            "data.kubernetes.admission"
+            "data.pipeline.security.allow")
+
+          echo "$RESULT"
+
+          echo "OPA policy evaluation completed."
