@@ -1,4 +1,4 @@
-name: SAST Scan
+then my sast doesnt comprises all that needs to be there  name: SAST Scan
 
 on:
   workflow_call:
