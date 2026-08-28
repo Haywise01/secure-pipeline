@@ -1,32 +1,32 @@
-name: Container and SBOM Security Gate
+name: Container Scan
 
 on:
+  workflow_call:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-scan:
-    name: Build, SBOM, and Scan Container
+  container-scan:
+    name: Scan Container Image
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Create SBOM Directory
-        run: mkdir -p ./sbom
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Generate SBOM (Syft)
-        uses: anchore/sbom-action@v0
+      - name: Build Local Container Image
+        uses: docker/build-push-action@v5
         with:
-          path: .
-          format: cyclonedx-json
-          output-file: ./sbom/sbom-cyclonedx.json
+          context: .
+          load: true
+          tags: secure-app:latest
 
-      - name: Upload SBOM Artifact
-        uses: actions/upload-artifact@v4
+      - name: Run Trivy Container Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
         with:
-          name: sbom-artifact
-          path: ./sbom/sbom-cyclonedx.json
+          image-ref: 'secure-app:latest'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'

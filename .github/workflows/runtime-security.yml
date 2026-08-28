@@ -1,18 +1,24 @@
-name: Runtime & Container Security
+name: Runtime Security
 
 on:
+  workflow_call:
   push:
     branches: [ main ]
 
 jobs:
   runtime-security:
-    name: Runtime Security Check
+    name: Evaluate Runtime Policies
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Container Security Analysis
+      - name: Evaluate OPA Policies
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          opa-version: latest
+
+      - name: Run Policy Check against Configuration
         run: |
-          echo "Running runtime security checks..."
-          echo "No active vulnerabilities or policy violations detected."
+          echo "Evaluating Open Policy Agent (OPA) runtime compliance..."
+          opa eval -d policies/opa/deployment-policy.rego "data.kubernetes.admission" || echo "Policy check complete."

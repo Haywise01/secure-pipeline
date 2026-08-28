@@ -1,7 +1,9 @@
-name: Security Gates & OIDC Deployment
+name: DevSecOps Security Pipeline
 
 on:
   push:
+    branches: [ main ]
+  pull_request:
     branches: [ main ]
 
 permissions:
@@ -10,14 +12,23 @@ permissions:
   security-events: write
 
 jobs:
-  security-gates-pass:
-    name: Evaluate All Security Gates
+  call-sast:
+    uses: ./.github/workflows/sast.yml
+
+  call-container-scan:
+    uses: ./.github/workflows/container-scan.yml
+
+  call-iac-security:
+    uses: ./.github/workflows/iac-security.yml
+
+  call-runtime-security:
+    uses: ./.github/workflows/runtime-security.yml
+
+  evaluate-final-gate:
+    needs: [call-sast, call-container-scan, call-iac-security, call-runtime-security]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Simulate Security Compliance Gate Check
+      - name: All Security Gates Passed
         run: |
-          echo "Running compliance checks..."
-          echo "Security gates passed successfully!"
+          echo "All modular DevSecOps security workflows executed successfully."
+          echo "Pipeline compliance gates cleared."
