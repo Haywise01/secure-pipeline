@@ -2,33 +2,38 @@ name: DevSecOps Security Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 permissions:
-  id-token: write
   contents: read
   security-events: write
 
 jobs:
   call-sast:
-    uses: ./.github/workflows/sast.yml
+    uses: Haywise01/secure-pipeline/.github/workflows/sast.yml@main
 
   call-container-scan:
-    uses: ./.github/workflows/container-scan.yml
+    uses: Haywise01/secure-pipeline/.github/workflows/container-scan.yml@main
 
   call-iac-security:
-    uses: ./.github/workflows/iac-security.yml
+    uses: Haywise01/secure-pipeline/.github/workflows/iac-security.yml@main
 
   call-runtime-security:
-    uses: ./.github/workflows/runtime-security.yml
+    uses: Haywise01/secure-pipeline/.github/workflows/runtime-security.yml@main
 
   evaluate-final-gate:
-    needs: [call-sast, call-container-scan, call-iac-security, call-runtime-security]
+    name: Final Security Gate
+    needs:
+      - call-sast
+      - call-container-scan
+      - call-iac-security
+      - call-runtime-security
     runs-on: ubuntu-latest
+
     steps:
-      - name: All Security Gates Passed
+      - name: Security Gate Passed
         run: |
-          echo "All modular DevSecOps security workflows executed successfully."
+          echo "All applicable security checks passed."
           echo "Pipeline compliance gates cleared."

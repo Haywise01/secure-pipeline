@@ -2,23 +2,52 @@ name: Runtime Security
 
 on:
   workflow_call:
-  push:
-    branches: [ main ]
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
-  runtime-security:
-    name: Evaluate Runtime Policies
+  detect-runtime-policy:
+    name: Detect OPA Runtime Policy
     runs-on: ubuntu-latest
+    outputs:
+      has_policy: ${{ steps.detect.outputs.has_policy }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Evaluate OPA Policies
+      - name: Check for OPA Policy
+        id: detect
+        run: |
+          if [ -f "policies/opa/deployment-policy.rego" ]; then
+            echo "has_policy=true" >> "$GITHUB_OUTPUT"
+            echo "OPA runtime policy detected."
+          else
+            echo "has_policy=false" >> "$GITHUB_OUTPUT"
+            echo "No OPA runtime policy detected."
+          fi
+
+  runtime-security:
+    name: Evaluate Runtime Policies
+    needs: detect-runtime-policy
+    if: needs.detect-runtime-policy.outputs.has_policy == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up OPA
         uses: open-policy-agent/setup-opa@v2
         with:
-          opa-version: latest
+          version: latest
 
-      - name: Run Policy Check against Configuration
+      - name: Run OPA Policy Check
         run: |
-          echo "Evaluating Open Policy Agent (OPA) runtime compliance..."
-          opa eval -d policies/opa/deployment-policy.rego "data.kubernetes.admission" || echo "Policy check complete."
+          echo "Evaluating Open Policy Agent runtime compliance..."
+
+          opa eval \
+            -d policies/opa/deployment-policy.rego \
+            "data.kubernetes.admission"

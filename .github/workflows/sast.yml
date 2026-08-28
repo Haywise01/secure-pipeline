@@ -1,11 +1,11 @@
-name: DevSecOps Secure Pipeline
+name: SAST and Secret Scanning
 
 on:
   workflow_call:
 
 permissions:
-  security-events: write
   contents: read
+  security-events: write
 
 jobs:
   security-scan:
