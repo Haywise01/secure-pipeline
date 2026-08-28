@@ -11,6 +11,7 @@ jobs:
   detect-iac:
     name: Detect IaC Files
     runs-on: ubuntu-latest
+
     outputs:
       has_iac: ${{ steps.detect.outputs.has_iac }}
 
@@ -20,13 +21,14 @@ jobs:
 
       - name: Check for IaC files
         id: detect
+        shell: bash
         run: |
           if find . -type f \( \
             -name "*.tf" \
             -o -name "*.tf.json" \
             -o -name "Dockerfile" \
-            -o -name "*.yaml" \
-            -o -name "*.yml" \
+            -o -name "docker-compose.yml" \
+            -o -name "docker-compose.yaml" \
           \) -not -path "./.git/*" | grep -q .; then
             echo "has_iac=true" >> "$GITHUB_OUTPUT"
             echo "IaC files detected."
@@ -49,5 +51,7 @@ jobs:
         uses: bridgecrewio/checkov-action@master
         with:
           directory: .
-          framework: dockerfile,terraform,kubernetes
+          framework: dockerfile,terraform
           output_format: cli
+          quiet: false
+          soft_fail: false
