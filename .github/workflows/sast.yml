@@ -1,4 +1,4 @@
-then my sast doesnt comprises all that needs to be there  name: SAST Scan
+name: DevSecOps secure Pipeline
 
 on:
   workflow_call:
@@ -10,12 +10,17 @@ permissions:
   contents: read
 
 jobs:
-  sast:
-    name: Run Semgrep SAST
+  security-scan:
+    name: Run Code and Secret Scans
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Run Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Semgrep SAST
         uses: semgrep/semgrep-action@v1
