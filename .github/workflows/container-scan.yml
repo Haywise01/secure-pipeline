@@ -20,6 +20,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./iac/Dockerfile
           load: true
           tags: secure-app:latest
 
