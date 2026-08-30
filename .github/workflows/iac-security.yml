@@ -31,7 +31,7 @@ jobs:
             echo "IaC files detected."
           else
             echo "has_iac=false" >> "$GITHUB_OUTPUT"
-            echo "No IaC files detected."
+            echo "No supported IaC files detected."
           fi
 
       - name: Run Checkov IaC Scan
@@ -39,7 +39,7 @@ jobs:
         uses: bridgecrewio/checkov-action@v12.1347.0
         with:
           directory: .
-          framework: dockerfile terraform cloudformation kubernetes helm docker_compose
+          framework: all
           output_format: cli
           quiet: false
           soft_fail: false
