@@ -1,39 +1,74 @@
-name: DevSecOps Security Pipeline
+name: DevSecOps Security Gate
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_call:
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
-  call-sast:
+
+  sast:
+    name: SAST and Secret Scanning
     uses: Haywise01/secure-pipeline/.github/workflows/sast.yml@main
 
-  call-container-scan:
+  container:
+    name: Container Security
     uses: Haywise01/secure-pipeline/.github/workflows/container-scan.yml@main
 
-  call-iac-security:
+  iac:
+    name: IaC Security
     uses: Haywise01/secure-pipeline/.github/workflows/iac-security.yml@main
 
-  call-runtime-security:
+  runtime:
+    name: Runtime Security
     uses: Haywise01/secure-pipeline/.github/workflows/runtime-security.yml@main
 
-  evaluate-final-gate:
+  final-gate:
     name: Final Security Gate
+    if: ${{ always() }}
     needs:
-      - call-sast
-      - call-container-scan
-      - call-iac-security
-      - call-runtime-security
+      - sast
+      - container
+      - iac
+      - runtime
     runs-on: ubuntu-latest
 
     steps:
-      - name: Security Gate Passed
+      - name: Evaluate Security Results
+        shell: bash
         run: |
-          echo "All applicable security checks passed."
-          echo "Pipeline compliance gates cleared."
+          echo "========================================"
+          echo "       DevSecOps Security Gate"
+          echo "========================================"
+          echo ""
+          echo "SAST:       ${{ needs.sast.result }}"
+          echo "Container:  ${{ needs.container.result }}"
+          echo "IaC:        ${{ needs.iac.result }}"
+          echo "Runtime:    ${{ needs.runtime.result }}"
+          echo ""
+
+          if [ "${{ needs.sast.result }}" != "success" ]; then
+            echo "❌ SAST security gate failed."
+            exit 1
+          fi
+
+          if [ "${{ needs.container.result }}" != "success" ]; then
+            echo "❌ Container security gate failed."
+            exit 1
+          fi
+
+          if [ "${{ needs.iac.result }}" != "success" ]; then
+            echo "❌ IaC security gate failed."
+            exit 1
+          fi
+
+          if [ "${{ needs.runtime.result }}" != "success" ]; then
+            echo "❌ Runtime security gate failed."
+            exit 1
+          fi
+
+          echo "========================================"
+          echo "✅ ALL SECURITY GATES PASSED"
+          echo "========================================"

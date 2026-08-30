@@ -8,18 +8,15 @@ permissions:
   security-events: write
 
 jobs:
-  detect-runtime-policy:
-    name: Detect OPA Runtime Policy
+  runtime-security:
+    name: Runtime Policy Security
     runs-on: ubuntu-latest
-
-    outputs:
-      has_policy: ${{ steps.detect.outputs.has_policy }}
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Check for OPA Policy
+      - name: Detect OPA Policy
         id: detect
         shell: bash
         run: |
@@ -31,35 +28,40 @@ jobs:
             echo "No OPA runtime policy detected."
           fi
 
-  runtime-security:
-    name: Evaluate Runtime Policies
-    needs: detect-runtime-policy
-    if: needs.detect-runtime-policy.outputs.has_policy == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Set up OPA
+        if: steps.detect.outputs.has_policy == 'true'
         uses: open-policy-agent/setup-opa@v2
         with:
-          version: latest
+          version: "1.9.0"
 
       - name: Validate OPA Policy
+        if: steps.detect.outputs.has_policy == 'true'
         run: |
           echo "Validating Open Policy Agent policy..."
           opa check policies/opa/deployment-policy.rego
 
-      - name: Run OPA Policy Check
+      - name: Evaluate OPA Policy
+        if: steps.detect.outputs.has_policy == 'true'
+        shell: bash
         run: |
           echo "Evaluating Open Policy Agent runtime compliance..."
 
           RESULT=$(opa eval \
-            --format=json \
-            -d policies/opa/deployment-policy.rego \
+            --format=raw \
+            --data policies/opa/deployment-policy.rego \
             "data.pipeline.security.allow")
 
-          echo "$RESULT"
+          echo "OPA decision: $RESULT"
 
-          echo "OPA policy evaluation completed."
+          if [ "$RESULT" != "true" ]; then
+            echo "OPA policy denied the deployment."
+            exit 1
+          fi
+
+          echo "OPA policy passed."
+
+      - name: Runtime Policy Not Applicable
+        if: steps.detect.outputs.has_policy != 'true'
+        run: |
+          echo "No OPA policy detected."
+          echo "Runtime policy security is not applicable."

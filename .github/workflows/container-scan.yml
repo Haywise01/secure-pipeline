@@ -8,20 +8,23 @@ permissions:
   security-events: write
 
 jobs:
-  detect-container:
-    name: Detect Dockerfile
+  container-security:
+    name: Container Security Scan
     runs-on: ubuntu-latest
-    outputs:
-      has_dockerfile: ${{ steps.detect.outputs.has_dockerfile }}
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Check for Dockerfile
+      - name: Detect Dockerfile
         id: detect
+        shell: bash
         run: |
-          if [ -f "Dockerfile" ]; then
+          if find . \
+            -type f \
+            -name 'Dockerfile' \
+            -not -path './.git/*' \
+            -print -quit | grep -q .; then
             echo "has_dockerfile=true" >> "$GITHUB_OUTPUT"
             echo "Dockerfile detected."
           else
@@ -29,21 +32,13 @@ jobs:
             echo "No Dockerfile detected."
           fi
 
-  container-scan:
-    name: Build and Scan Container
-    needs: detect-container
-    if: needs.detect-container.outputs.has_dockerfile == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Set up Docker Buildx
+        if: steps.detect.outputs.has_dockerfile == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Build Local Container Image
-        uses: docker/build-push-action@v6
+        if: steps.detect.outputs.has_dockerfile == 'true'
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -51,9 +46,17 @@ jobs:
           tags: secure-app:latest
 
       - name: Run Trivy Container Vulnerability Scanner
-        uses: aquasecurity/trivy-action@master
+        if: steps.detect.outputs.has_dockerfile == 'true'
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: secure-app:latest
           format: table
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+
+      - name: Container Scan Not Applicable
+        if: steps.detect.outputs.has_dockerfile != 'true'
+        run: |
+          echo "No Dockerfile detected."
+          echo "Container security scan is not applicable."
