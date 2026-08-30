@@ -16,26 +16,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
-      - name: Detect IaC Files
-        id: detect
-        shell: bash
-        run: |
-          if find . -type f \( \
-            -name "*.tf" \
-            -o -name "*.tf.json" \
-            -o -name "Dockerfile" \
-            -o -name "docker-compose.yml" \
-            -o -name "docker-compose.yaml" \
-          \) -not -path "./.git/*" | grep -q .; then
-            echo "has_iac=true" >> "$GITHUB_OUTPUT"
-            echo "IaC files detected."
-          else
-            echo "has_iac=false" >> "$GITHUB_OUTPUT"
-            echo "No supported IaC files detected."
-          fi
-
       - name: Run Checkov IaC Scan
-        if: steps.detect.outputs.has_iac == 'true'
         uses: bridgecrewio/checkov-action@v12.1347.0
         with:
           directory: .
@@ -43,9 +24,3 @@ jobs:
           output_format: cli
           quiet: false
           soft_fail: false
-
-      - name: IaC Scan Not Applicable
-        if: steps.detect.outputs.has_iac != 'true'
-        run: |
-          echo "No supported IaC files detected."
-          echo "IaC security scan is not applicable."
