@@ -1,0 +1,27 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-vulnerable-deployments
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: require-non-root-and-limits
+      match:
+        all:
+          - resources:
+              kinds:
+                - Deployment
+      validate:
+        message: "Security violation: Containers must not run as root (runAsNonRoot: true) and must define resource limits."
+        pattern:
+          spec:
+            template:
+              spec:
+                containers:
+                  - securityContext:
+                      runAsNonRoot: true
+                    resources:
+                      limits:
+                        cpu: "?*"
+                        memory: "?*"
