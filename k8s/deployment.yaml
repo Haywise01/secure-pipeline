@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-app-deployment
+  labels:
+    app: secure-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secure-app
+  template:
+    metadata:
+      labels:
+        app: secure-app
+    spec:
+      hostNetwork: true # Violation: Overpermissive networking
+      containers:
+      - name: web
+        image: python:3.13-slim
+        command: ["python", "-m", "http.server", "8080"]
+        # Violation: Missing securityContext (runs as root)
+        # Violation: Missing resources.limits and resources.requests
