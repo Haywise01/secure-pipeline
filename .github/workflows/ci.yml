@@ -1,0 +1,11 @@
+name: CI Security Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  call-security-gates:
+    uses: ./.github/workflows/security-gates.yml
