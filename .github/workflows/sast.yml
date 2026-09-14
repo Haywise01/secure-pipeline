@@ -20,8 +20,13 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: auto
-          generate-sarif: '1'
-          sarif_file: 'semgrep.sarif'
+          publishToken: ${{ secrets.SEMGREP_APP_TOKEN }} # Optional, leave if unneeded
+        continue-on-error: true
+
+      - name: Run Semgrep CLI Scan to SARIF
+        run: |
+          pip install semgrep
+          semgrep scan --sarif --output semgrep.sarif
         continue-on-error: true
 
       - name: Upload Semgrep SARIF Report
