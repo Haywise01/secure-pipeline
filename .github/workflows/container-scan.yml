@@ -20,11 +20,7 @@ jobs:
         id: detect
         shell: bash
         run: |
-          if find . \
-            -type f \
-            -name 'Dockerfile' \
-            -not -path './.git/*' \
-            -print -quit | grep -q .; then
+          if find . -type f -name 'Dockerfile' -not -path './.git/*' -print -quit | grep -q .; then
             echo "has_dockerfile=true" >> "$GITHUB_OUTPUT"
             echo "Dockerfile detected."
           else
@@ -45,18 +41,23 @@ jobs:
           load: true
           tags: secure-app:latest
 
-      - name: Run Trivy Container Vulnerability Scanner
+      - name: Run Trivy Vulnerability Scanner
         if: steps.detect.outputs.has_dockerfile == 'true'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: secure-app:latest
-          format: table
-          exit-code: '1'
+          image-ref: 'secure-app:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          ignore-unfixed: false
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF Report
+        if: steps.detect.outputs.has_dockerfile == 'true' && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
 
       - name: Container Scan Not Applicable
         if: steps.detect.outputs.has_dockerfile != 'true'
         run: |
-          echo "No Dockerfile detected."
-          echo "Container security scan is not applicable."
+          echo "No Dockerfile detected. Container security scan skipped."

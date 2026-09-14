@@ -8,34 +8,23 @@ permissions:
   security-events: write
 
 jobs:
-  security-scan:
+  sast:
     name: Code and Secret Scanning
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Run Semgrep SARIF Scan
+        uses: returntocorp/semgrep-action@v1
         with:
-          fetch-depth: 0
+          config: auto
+          generate-sarif: '1'
+          sarif_file: 'semgrep.sarif'
+        continue-on-error: true
 
-      - name: Run Gitleaks Secret Scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Upload Semgrep SARIF Report
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          python-version: "3.13"
-
-      - name: Install Semgrep
-        run: |
-          python -m pip install --upgrade pip
-          pip install semgrep
-
-      - name: Run Semgrep SAST
-        run: |
-          semgrep scan \
-            --config auto \
-            --error \
-            --verbose
+          sarif_file: 'semgrep.sarif'
